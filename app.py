@@ -12,7 +12,7 @@ from flask_jwt_extended import JWTManager, jwt_required, create_access_token, ge
 from flask_sqlalchemy import SQLAlchemy
 
 #auth0 
-from authlib.integrations.flask_client import OAuth
+from authlib.integrations.flask_client import OAuth 
 #estos 2 de abajo son para el manejo seguro de auth0, peroooo
 #la seguridad es para miedosos
 from dotenv import load_dotenv
@@ -23,7 +23,7 @@ app = flask.Flask(__name__)
 # @app.route('/')
 # def hello():
 #     return 'Esta vivok!'
-
+oauth = OAuth(app)
 cors = CORS(app)
 
 #este flask requiere AXIOS para conectar correctamente con el front
@@ -54,12 +54,12 @@ mydb = mysql.connector.connect(
   password="my-secret-pw",
   database="test"
 )
-db = SQLAlchemy(mysql.connector.connect(
-  host="localhost",
-  user="root",
-  password="my-secret-pw",
-  database="test"
-))
+# db = SQLAlchemy(mysql.connector.connect(
+#   host="localhost",
+#   user="root",
+#   password="my-secret-pw",
+#   database="test"
+# ))
 
 #Prueba simple de conexion
 @app.route('/db_status')
@@ -77,39 +77,45 @@ client_secret = 'jsZv4zL7kIfL5A0mb1rQE8HwPng5ennxm2NDxrhNrqeumDdAyswawvUGNNXehur
 ##<script src="https://cdn.auth0.com/js/auth0/9.12.1/auth0.min.js"></script>
 ##Este script debe ir en toda pagina html que use auth0
 
-@app.route('/auth0login')
-def auth0login():
-         return auth0.authorize_redirect(redirect_uri=os.getenv('AUTH0_CALLBACK_URL'))
+#blog.html tiene los componentes js necesarios para auth0
+@app.route('/loginauth0', methods=['GET'])
+def loginauth0():
+    #if consulta a la base de datos que usuario,clave = usuario, usuario.clave:
+    return auth0.authorize_redirect(redirect_uri='http://localhost:5000/callback')
 
-@app.route('/auth0registro')
-def auth0registro():
-        return "Null!"
+@app.route('/callback')
+def callback():
+    auth0.authorize_access_token()
+    resp = auth0.get('userinfo')
+    userinfo = resp.json()
+    session['jwt_payload'] = userinfo
+    print(session)
+    return redirect('http://localhost/vidaNocturna')
+#En este link iria la vista de usuario logeado
 
-@app.route('/auth0logout')
-def auth0logout():
-        return "Null!"
-
-#Que mierda es un callback?????????
-@app.route('/auth0callback')
-def auth0callback():
-        return "Null!"
+#Esta seria la pagina de usuario
+@app.route('/dashboard')
+def dashboard():
+    if 'jwt_payload' not in session:
+        return redirect(url_for('login'))
+    return f"Welcome {session['jwt_payload']['name']}!"
 
 
-#modelo
-class Users(mydb.schema): # modelo de la tabla User
-    id = mydb.Column(mydb.Integer, primary_key=True)
-    username = mydb.Column(mydb.String(50), unique=True)
-    password = mydb.Column(mydb.String(50))
-    email = mydb.Column(mydb.String(50), unique=True)
-    cellphone = mydb.Column(mydb.Integer)
-    def __init__(self, username, password, email, cellphone):
-        self.username = username
-        self.password = password
-        self.email = email
-        self.cellphone = cellphone
+#modelo (solo sirve si db is postgres sql)
+# class Users(mydb.schema): # modelo de la tabla User
+#     id = mydb.Column(mydb.Integer, primary_key=True)
+#     username = mydb.Column(mydb.String(50), unique=True)
+#     password = mydb.Column(mydb.String(50))
+#     email = mydb.Column(mydb.String(50), unique=True)
+#     cellphone = mydb.Column(mydb.Integer)
+#     def __init__(self, username, password, email, cellphone):
+#         self.username = username
+#         self.password = password
+#         self.email = email
+#         self.cellphone = cellphone
 
-    def __repr__(self):
-        return f'<User {self.username}>'
+#     def __repr__(self):
+#         return f'<User {self.username}>'
 
 # este codigo comentado de abajo funciona para Postgresql
 # no se si funcione para Mysql
