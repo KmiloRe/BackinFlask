@@ -2,7 +2,7 @@
 simple backend api using flask
 requiere axios
 ** npm i axios -S
-# Desde una terminal como administrador: python -m pip install --upgrade pip , pip install auth0-python
+# Desde una terminal como administrador: python -m pip install --upgrade pip , pip install auth0-python, pip install python-dotenv, pip install requests
 ** Documentación axios https://javascript.plainenglish.io/how-to-use-axios-in-vanilla-javascript-2dbf176e08d4
 pip install Flask-SQLAlchemy  
 pip install Flask-JWT-Extended
