@@ -6,7 +6,8 @@ requiere axios
 ** Documentación axios https://javascript.plainenglish.io/how-to-use-axios-in-vanilla-javascript-2dbf176e08d4
 pip install Flask-SQLAlchemy  
 pip install Flask-JWT-Extended
-pip install Authlib      
+pip install Authlib 
+pip install sqlalchemy
 
 * La base de datos se encuentra en el docker
 * app.py debe estar corriendo desde el escritorio en http://127.0.0.1:5000
