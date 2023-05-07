@@ -2,7 +2,6 @@ import flask
 from ast import Match
 # import sqlite3
 import mysql.connector
-
 from flask import Flask, request, jsonify
 from mysql.connector import Error
 from flask_cors import CORS,  cross_origin
@@ -56,8 +55,8 @@ def db_status():
         print("Falla al conect")
         return "Database connection failed!"
 
-# modelo
-class User(mydb.Model): # modelo de la tabla User
+#modelo
+class Users(mydb.schema): # modelo de la tabla User
     id = mydb.Column(mydb.Integer, primary_key=True)
     username = mydb.Column(mydb.String(50), unique=True)
     password = mydb.Column(mydb.String(50))
@@ -75,47 +74,71 @@ class User(mydb.Model): # modelo de la tabla User
 # este codigo comentado de abajo funciona para Postgresql
 # no se si funcione para Mysql
 
-# with app.app_context():
+#with app.app_context():
 #     mydb.create_all() # crea las tablas si no existen
 
 #Log in
+# @app.route('/login', methods=['POST'])
+# @cross_origin(origin='*')
+# def login():
+#     try:
+#         username = request.json['username']
+#         password = request.json['password']
+#         user = Users.query.filter_by(username=username).first()
+#         if user and user.password == password:
+#             # Crea un token de acceso para el usuario autenticado
+#             access_token = create_access_token(identity=user.id)
+#             return jsonify({'access_token': access_token}), 200
+#         else:
+#             return jsonify({'message': 'Credenciales inválidas'}), 401
+#     except Error as e:
+#         print("Error while connecting to MySQL", e)
+
+
 @app.route('/login', methods=['POST'])
 @cross_origin(origin='*')
 def login():
     try:
         username = request.json['username']
-        password = request.json['password']
-        user = User.query.filter_by(username=username).first()
-        if user and user.password == password:
+        clave = request.json['clave']
+        #user = User.query.filter_by(username=username).first()
+        cursor = mydb.cursor()
+        cursor.execute("SELECT clave from Users WHERE username="+username)
+        results = cursor.fetchall()
+        if results == clave:
             # Crea un token de acceso para el usuario autenticado
-            access_token = create_access_token(identity=user.id)
+            access_token = create_access_token(identity=Users.id)
             return jsonify({'access_token': access_token}), 200
         else:
             return jsonify({'message': 'Credenciales inválidas'}), 401
     except Error as e:
         print("Error while connecting to MySQL", e)
 
-# Registrarme
-@app.route('/register', methods=['POST'])
+# Query simple que trae un id
+#Ejemplo de read con un query X a la BD
+@app.route('/readinfo', methods=['GET'])
 @cross_origin(origin='*')
-def register():
+def read():
     try:
-        username = request.json['username']
-        password = request.json['password']
-        email = request.json['email']
-        cellphone = request.json['cellphone']
-        user = User(username, password, email, cellphone)
-        mydb.session.add(user) # agrega el usuario a la base de datos
-        mydb.session.commit() # guarda los cambios en la base de datos
-        response = {
-            'message': 'Registro exitoso',
-            'data': {
-                'username': username,
-                'email': email,
-                'cellphone': cellphone
-            }
-        }
-        return jsonify(response), 200
+        cursor = mydb.cursor()
+        cursor.execute("SELECT username from Users Where id='1116241998'")
+        results = cursor.fetchall()
+        data = []
+        for i in results:
+                        data.append(i)
+                        #print(data)
+
+        #print(cursor.execute("SELECT id from Users Where id='1116241998'"))
+        # response = {
+        #     'message': 'Registro exitoso',
+        #     'data': {
+        #         'username': username,
+        #         'email': email,
+        #         'cellphone': cellphone
+        #     }
+        # }
+        return str(data[0][0])
+    #Todo lo que retorna en web tiene que ser String 
     except Error as e:
         print("Error while connecting to MySQL", e)
 
@@ -231,8 +254,91 @@ def plano():
 
 @app.route('/')
 def index():
-    return "Hello, World!"
+    return "Hello, from flask Back!"
 
-@app.route('/facts')
-def plano():
-    return "firebase db > flask + mysql"
+# @app.route('/facts')
+# def plano():
+#     return "firebase db > flask + mysql"
+
+###*************Metodos para cambio de contraseña
+
+@app.route('/readoldpass', methods=['GET'])
+@cross_origin(origin='*')
+def readoldpass():
+    # json or urlencode
+    try:
+        cursor = mydb.cursor()
+        cursor.execute("SELECT username from Users Where id='1116241998'")
+        results = cursor.fetchall()
+        data = []
+        for i in results:
+                        data.append(i)
+                        #print(data)
+
+        #print(cursor.execute("SELECT id from Users Where id='1116241998'"))
+        # response = {
+        #     'message': 'Registro exitoso',
+        #     'data': {
+        #         'username': username,
+        #         'email': email,
+        #         'cellphone': cellphone
+        #     }
+        # }
+        return str(data[0][0])
+    #Todo lo que retorna en web tiene que ser String 
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+
+
+
+
+
+
+
+
+#Agregar un user
+
+@app.route('/newuser', methods=['POST'])
+def data():
+    # valores = flask.request.values
+    # id = flask.request.values.get("id")
+    # temp = flask.request.values.get("temperatura")
+    # hum = flask.request.values.get("humedad")
+    # luz = flask.request.values.get("luz")
+    # maceta = flask.request.values.get("maceta")
+    
+    #valores = flask.request.values
+    # se reemplaza esto por variables que vengan desde el front y listo
+    # ya se pueden agregar usuarios
+    id = 100000
+    temp = "Camilo"
+    hum = "camilo@camilosky.com.teodiohtmlvanila"
+    luz = 3127403888
+    maceta = "Contraseñadsa"
+    
+    try:
+        connection = mydb
+        #mysql.connector.connect(
+         # host='database-1.cg820r7giksa.us-east-1.rds.amazonaws.com', 
+         # database='plantCare', user='admin', password='12345678')
+        if connection.is_connected():
+            db_Info = connection.get_server_info()
+            #print("Connected to MySQL Server version ", db_Info)
+            cursor = connection.cursor()
+            #recomendacion = recomendaciones(temp, hum, luz)
+
+            #print(type(recomendacion))
+            add_produto = """INSERT INTO Users(id,
+                        username,email,cellphone,clave)
+                        VALUES (%s, %s, %s,%s,%s)"""
+            cursor.execute(
+                add_produto, (id,temp, hum, luz, maceta))
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.commit()
+           # connection.close()
+            #print("MySQL connection is closed")
+    return "32"
