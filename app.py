@@ -2,13 +2,29 @@ import flask
 from ast import Match
 # import sqlite3
 import mysql.connector
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, url_for, session
 from mysql.connector import Error
 from flask_cors import CORS,  cross_origin
 # para login y registro
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 #from flask.ext.cors import CORS, cross_origin
+#Postgres tiene .Model, mysql NO, para esto importamos:
+from flask_sqlalchemy import SQLAlchemy
 
+#auth0 
+from authlib.integrations.flask_client import OAuth
+#estos 2 de abajo son para el manejo seguro de auth0, peroooo
+#la seguridad es para miedosos
+from dotenv import load_dotenv
+import os
+
+app = flask.Flask(__name__)
+
+# @app.route('/')
+# def hello():
+#     return 'Esta vivok!'
+
+cors = CORS(app)
 
 #este flask requiere AXIOS para conectar correctamente con el front
 # es un back muy sencillo pero tiene algunas funciones extras
@@ -24,13 +40,7 @@ from flask_jwt_extended import JWTManager, jwt_required, create_access_token, ge
 #python -m flask run    
 # pip install -r requirements.txt                                                       
                                                                                                        
-app = flask.Flask(__name__)
 
-# @app.route('/')
-# def hello():
-#     return 'Esta vivok!'
-
-cors = CORS(app)
 
 #Conexion a mysql
 #la base de datos se encuentra corriendo en un docker
@@ -44,6 +54,12 @@ mydb = mysql.connector.connect(
   password="my-secret-pw",
   database="test"
 )
+db = SQLAlchemy(mysql.connector.connect(
+  host="localhost",
+  user="root",
+  password="my-secret-pw",
+  database="test"
+))
 
 #Prueba simple de conexion
 @app.route('/db_status')
@@ -54,6 +70,30 @@ def db_status():
     else:
         print("Falla al conect")
         return "Database connection failed!"
+
+#SEGURIDAD EN LOS DATOS?, No no la conozco
+client_id = 'py3MmzYYQsrkOOSB4xaf7WZWvffXrrvl'
+client_secret = 'jsZv4zL7kIfL5A0mb1rQE8HwPng5ennxm2NDxrhNrqeumDdAyswawvUGNNXehurF'
+##<script src="https://cdn.auth0.com/js/auth0/9.12.1/auth0.min.js"></script>
+##Este script debe ir en toda pagina html que use auth0
+
+@app.route('/auth0login')
+def auth0login():
+         return auth0.authorize_redirect(redirect_uri=os.getenv('AUTH0_CALLBACK_URL'))
+
+@app.route('/auth0registro')
+def auth0registro():
+        return "Null!"
+
+@app.route('/auth0logout')
+def auth0logout():
+        return "Null!"
+
+#Que mierda es un callback?????????
+@app.route('/auth0callback')
+def auth0callback():
+        return "Null!"
+
 
 #modelo
 class Users(mydb.schema): # modelo de la tabla User
