@@ -197,7 +197,6 @@ def login():
     except Error as e:
         print("Error while connecting to MySQL", e)
 
-
 #Mysql MOdel not working
 # @app.route('/login', methods=['POST'])
 # @cross_origin(origin='*')
@@ -394,16 +393,19 @@ def readoldpass():
         print("Error while connecting to MySQL", e)
 
 
-
-
-
-
-
-
 #Agregar un user
 
 @app.route('/newuser', methods=['POST'])
+@cross_origin(origin='*')
 def data():
+
+    #faltan verificaciones de calidad de datos
+        #que no vengan vacios
+        #que el correo si sea un correo
+        #que la contraseña sea segura
+    newusername = request.json['useruser']
+    email = request.json['uname']
+    clave = request.json['psw']
     # valores = flask.request.values
     # id = flask.request.values.get("id")
     # temp = flask.request.values.get("temperatura")
@@ -414,11 +416,11 @@ def data():
     #valores = flask.request.values
     # se reemplaza esto por variables que vengan desde el front y listo
     # ya se pueden agregar usuarios
-    id = 100000
-    temp = "Camilo"
-    hum = "camilo@camilosky.com.teodiohtmlvanila"
+    #id = 1000002
+    #temp = "Camilo"
+    #hum = "camilo@camilosky.com.teodiohtmlvanila"
     luz = 3127403888
-    maceta = "Contraseñadsa"
+    #maceta = "Contraseñadsa"
     
     try:
         connection = mydb
@@ -430,13 +432,25 @@ def data():
             #print("Connected to MySQL Server version ", db_Info)
             cursor = connection.cursor()
             #recomendacion = recomendaciones(temp, hum, luz)
+        #falta verificación de que el correo ingresado no exista ya
 
+            cursor2 = connection.cursor()
+            cursor2.execute("select max(id) from Users")
+            results2 = cursor2.fetchall()
+            data2 = []
+            for i in results2:
+                        data2.append(i)
+        #print()
+            idd3 = (data2[0][0]+1)
+            print(idd3)
+            #idd3 es el id max de la tabla +1, para mantener integridad
+            #print(data2[0][0].type)
             #print(type(recomendacion))
             add_produto = """INSERT INTO Users(id,
                         username,email,cellphone,clave)
                         VALUES (%s, %s, %s,%s,%s)"""
             cursor.execute(
-                add_produto, (id,temp, hum, luz, maceta))
+                add_produto, (idd3,newusername, email, luz, clave))
     except Error as e:
         print("Error while connecting to MySQL", e)
     finally:
@@ -445,4 +459,52 @@ def data():
             connection.commit()
            # connection.close()
             #print("MySQL connection is closed")
-    return "32"
+    return newusername
+
+#Metodos de prueba:
+
+
+# @app.route('/registro', methods=['POST'])
+# def register():
+#     # valores = flask.request.values
+#     # id = flask.request.values.get("id")
+#     # temp = flask.request.values.get("temperatura")
+#     # hum = flask.request.values.get("humedad")
+#     # luz = flask.request.values.get("luz")
+#     # maceta = flask.request.values.get("maceta")
+    
+#     #valores = flask.request.values
+#     # se reemplaza esto por variables que vengan desde el front y listo
+#     # ya se pueden agregar usuarios
+#     id = 1000003
+#     temp = "Chalarquin"
+#     hum = "chalarca@camilosky.com.teodiohtmlvanila"
+#     luz = 3127403888
+#     maceta = "Contraseñadsa"
+    
+#     try:
+#         connection = mydb
+#         #mysql.connector.connect(
+#          # host='database-1.cg820r7giksa.us-east-1.rds.amazonaws.com', 
+#          # database='plantCare', user='admin', password='12345678')
+#         if connection.is_connected():
+#             db_Info = connection.get_server_info()
+#             #print("Connected to MySQL Server version ", db_Info)
+#             cursor = connection.cursor()
+#             #recomendacion = recomendaciones(temp, hum, luz)
+
+#             #print(type(recomendacion))
+#             add_produto = """INSERT INTO Users(id,
+#                         username,email,cellphone,clave)
+#                         VALUES (%s, %s, %s,%s,%s)"""
+#             cursor.execute(
+#                 add_produto, (id,temp, hum, luz, maceta))
+#     except Error as e:
+#         print("Error while connecting to MySQL", e)
+#     finally:
+#         if connection.is_connected():
+#             cursor.close()
+#             connection.commit()
+#            # connection.close()
+#             #print("MySQL connection is closed")
+#     return temp
