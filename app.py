@@ -2,7 +2,7 @@ import flask
 from ast import Match
 # import sqlite3
 import mysql.connector
-from flask import Flask, request, jsonify, redirect, url_for, session
+from flask import Flask, request, jsonify, redirect, url_for, session,render_template
 from mysql.connector import Error
 from flask_cors import CORS,  cross_origin
 # para login y registro
@@ -18,6 +18,11 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import os
 
+
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+
+
 app = flask.Flask(__name__)
 
 # @app.route('/')
@@ -25,6 +30,9 @@ app = flask.Flask(__name__)
 #     return 'Esta vivok!'
 oauth = OAuth(app)
 cors = CORS(app)
+app.config["JWT_ALGORITHM"] = "HS256"
+app.config["JWT_SECRET_KEY"] = "super-secret"
+jwt = JWTManager(app) # instancia de JWT
 
 #este flask requiere AXIOS para conectar correctamente con el front
 # es un back muy sencillo pero tiene algunas funciones extras
@@ -78,6 +86,7 @@ client_secret = 'jsZv4zL7kIfL5A0mb1rQE8HwPng5ennxm2NDxrhNrqeumDdAyswawvUGNNXehur
 ##Este script debe ir en toda pagina html que use auth0
 
 #blog.html tiene los componentes js necesarios para auth0
+##Auth0, aun no funcional
 @app.route('/loginauth0', methods=['GET'])
 def loginauth0():
     #if consulta a la base de datos que usuario,clave = usuario, usuario.clave:
@@ -117,6 +126,24 @@ def dashboard():
 #     def __repr__(self):
 #         return f'<User {self.username}>'
 
+# class Users(mydb):
+#     __tablename__ = 'Users'
+    
+#     id = Column(Integer, primary_key=True)
+#     username = Column(String(50), unique=True)
+#     password = Column(String(50))
+#     email = Column(String(50), unique=True)
+#     cellphone = Column(Integer)
+    
+#     def __init__(self, username, password, email, cellphone):
+#         self.username = username
+#         self.password = password
+#         self.email = email
+#         self.cellphone = cellphone
+
+#     def __repr__(self):
+#         return f'<User {self.username}>'
+
 # este codigo comentado de abajo funciona para Postgresql
 # no se si funcione para Mysql
 
@@ -124,41 +151,72 @@ def dashboard():
 #     mydb.create_all() # crea las tablas si no existen
 
 #Log in
+@app.route('/login', methods=['POST'])
+@cross_origin(origin='*')
+def login():
+    try:
+        #uname=camilorestrerodriguez%40gmail.com&psw=gfgfgfgfgf&remember=on
+        #request_data = json.loads(request.json)
+        #email = request_data['email']
+        username = request.json['uname']
+        #username = 'camilo@camilosky.com.teodiohtmlvanila'
+        clave = request.json['psw']
+        print(username)
+        print(clave)
+        #clave = '123q'
+        cursor = mydb.cursor()
+        cursor.execute("SELECT clave from Users Where email='"+username+"'")
+        ##reemplazar Users.id con el id sacado de un select
+        results = cursor.fetchall()
+        data = []
+        for i in results:
+                        data.append(i)
+        #print()
+        
+        #Obtener el id para el token
+        cursor2 = mydb.cursor()
+        cursor2.execute("SELECT id from Users Where email='"+username+"'")
+        results = cursor2.fetchall()
+        data2 = []
+        for i in results:
+                        data2.append(i)
+        #print()
+        idd = str(data2[0][0])
+        if(clave == str(data[0][0])):
+             print('clave valida')
+             #debe redirigir a una pagina (que aun no esta lista) de usuario logeado´
+            # Crea un token de acceso para el usuario autenticado
+             access_token = create_access_token(identity=idd)
+             return jsonify({'access_token': access_token}), 200
+
+             #return redirect("http://localhost:8080/contact.html", code=302)
+        else:
+             print('clave invalida')
+             return redirect("http://localhost:8080/contact.html", code=302)#return a registro y en registro en else: return a index
+    #Todo lo que retorna en web tiene que ser String 
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+
+
+#Mysql MOdel not working
 # @app.route('/login', methods=['POST'])
 # @cross_origin(origin='*')
 # def login():
 #     try:
 #         username = request.json['username']
-#         password = request.json['password']
-#         user = Users.query.filter_by(username=username).first()
-#         if user and user.password == password:
+#         clave = request.json['clave']
+#         #user = User.query.filter_by(username=username).first()
+#         cursor = mydb.cursor()
+#         cursor.execute("SELECT clave from Users WHERE username="+username)
+#         results = cursor.fetchall()
+#         if results == clave:
 #             # Crea un token de acceso para el usuario autenticado
-#             access_token = create_access_token(identity=user.id)
+#             access_token = create_access_token(identity=Users.id)
 #             return jsonify({'access_token': access_token}), 200
 #         else:
 #             return jsonify({'message': 'Credenciales inválidas'}), 401
 #     except Error as e:
 #         print("Error while connecting to MySQL", e)
-
-
-@app.route('/login', methods=['POST'])
-@cross_origin(origin='*')
-def login():
-    try:
-        username = request.json['username']
-        clave = request.json['clave']
-        #user = User.query.filter_by(username=username).first()
-        cursor = mydb.cursor()
-        cursor.execute("SELECT clave from Users WHERE username="+username)
-        results = cursor.fetchall()
-        if results == clave:
-            # Crea un token de acceso para el usuario autenticado
-            access_token = create_access_token(identity=Users.id)
-            return jsonify({'access_token': access_token}), 200
-        else:
-            return jsonify({'message': 'Credenciales inválidas'}), 401
-    except Error as e:
-        print("Error while connecting to MySQL", e)
 
 # Query simple que trae un id
 #Ejemplo de read con un query X a la BD
@@ -167,7 +225,7 @@ def login():
 def read():
     try:
         cursor = mydb.cursor()
-        cursor.execute("SELECT username from Users Where id='1116241998'")
+        cursor.execute("SELECT username from Users Where id='100000'")
         results = cursor.fetchall()
         data = []
         for i in results:
