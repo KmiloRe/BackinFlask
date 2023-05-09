@@ -6,12 +6,15 @@ from flask import Flask, request, jsonify, redirect, url_for, session,render_tem
 from mysql.connector import Error
 from flask_cors import CORS,  cross_origin
 # para login y registro
+#Tokens con jwt
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 #from flask.ext.cors import CORS, cross_origin
 #Postgres tiene .Model, mysql NO, para esto importamos:
 from flask_sqlalchemy import SQLAlchemy
 
 #auth0 
+#Jose Miguel
+# para auth0 code de jose:
 from authlib.integrations.flask_client import OAuth 
 #estos 2 de abajo son para el manejo seguro de auth0, peroooo
 #la seguridad es para miedosos
@@ -21,6 +24,12 @@ import os
 
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
+
+#import pyodbc
+
+#Jose Miguel
+
+##Tengo muchos más imports de los necesarios
 
 
 app = flask.Flask(__name__)
@@ -47,7 +56,7 @@ jwt = JWTManager(app) # instancia de JWT
 #python3 -m pip install Flask  
 #python -m flask run    
 # pip install -r requirements.txt                                                       
-                                                                                                       
+#Otros comandos no incluidos, se enncuentran en el readme en git                                                                                                       
 
 
 #Conexion a mysql
@@ -62,12 +71,17 @@ mydb = mysql.connector.connect(
   password="my-secret-pw",
   database="test"
 )
+
+# Daniel Dominguez
+# codigo no usable
 # db = SQLAlchemy(mysql.connector.connect(
 #   host="localhost",
 #   user="root",
 #   password="my-secret-pw",
 #   database="test"
 # ))
+
+#Daniel Dominguez
 
 #Prueba simple de conexion
 @app.route('/db_status')
@@ -79,6 +93,9 @@ def db_status():
         print("Falla al conect")
         return "Database connection failed!"
 
+#Jose Miguel
+
+#Credenciales de auth0
 #SEGURIDAD EN LOS DATOS?, No no la conozco
 client_id = 'py3MmzYYQsrkOOSB4xaf7WZWvffXrrvl'
 client_secret = 'jsZv4zL7kIfL5A0mb1rQE8HwPng5ennxm2NDxrhNrqeumDdAyswawvUGNNXehurF'
@@ -109,46 +126,7 @@ def dashboard():
         return redirect(url_for('login'))
     return f"Welcome {session['jwt_payload']['name']}!"
 
-
-#modelo (solo sirve si db is postgres sql)
-# class Users(mydb.schema): # modelo de la tabla User
-#     id = mydb.Column(mydb.Integer, primary_key=True)
-#     username = mydb.Column(mydb.String(50), unique=True)
-#     password = mydb.Column(mydb.String(50))
-#     email = mydb.Column(mydb.String(50), unique=True)
-#     cellphone = mydb.Column(mydb.Integer)
-#     def __init__(self, username, password, email, cellphone):
-#         self.username = username
-#         self.password = password
-#         self.email = email
-#         self.cellphone = cellphone
-
-#     def __repr__(self):
-#         return f'<User {self.username}>'
-
-# class Users(mydb):
-#     __tablename__ = 'Users'
-    
-#     id = Column(Integer, primary_key=True)
-#     username = Column(String(50), unique=True)
-#     password = Column(String(50))
-#     email = Column(String(50), unique=True)
-#     cellphone = Column(Integer)
-    
-#     def __init__(self, username, password, email, cellphone):
-#         self.username = username
-#         self.password = password
-#         self.email = email
-#         self.cellphone = cellphone
-
-#     def __repr__(self):
-#         return f'<User {self.username}>'
-
-# este codigo comentado de abajo funciona para Postgresql
-# no se si funcione para Mysql
-
-#with app.app_context():
-#     mydb.create_all() # crea las tablas si no existen
+#Jose Miguel
 
 #Log in
 @app.route('/login', methods=['POST'])
@@ -194,31 +172,10 @@ def login():
              print('clave invalida')
              return redirect("http://localhost:8080/contact.html", code=302)#return a registro y en registro en else: return a index
     #Todo lo que retorna en web tiene que ser String 
+    # return redirect() aun no funcional, mejor retornar un bool segun sugerencia del profe
     except Error as e:
         print("Error while connecting to MySQL", e)
 
-#Mysql MOdel not working
-# @app.route('/login', methods=['POST'])
-# @cross_origin(origin='*')
-# def login():
-#     try:
-#         username = request.json['username']
-#         clave = request.json['clave']
-#         #user = User.query.filter_by(username=username).first()
-#         cursor = mydb.cursor()
-#         cursor.execute("SELECT clave from Users WHERE username="+username)
-#         results = cursor.fetchall()
-#         if results == clave:
-#             # Crea un token de acceso para el usuario autenticado
-#             access_token = create_access_token(identity=Users.id)
-#             return jsonify({'access_token': access_token}), 200
-#         else:
-#             return jsonify({'message': 'Credenciales inválidas'}), 401
-#     except Error as e:
-#         print("Error while connecting to MySQL", e)
-
-# Query simple que trae un id
-#Ejemplo de read con un query X a la BD
 @app.route('/readinfo', methods=['GET'])
 @cross_origin(origin='*')
 def read():
@@ -459,7 +416,25 @@ def data():
             connection.commit()
            # connection.close()
             #print("MySQL connection is closed")
-    return newusername
+    return render_template("contact.html")
+#enviar un bool y en front bool = true render x.html
+#false, que se quede =
+    #return newusername
+
+#Metodo aun no usable, a corregir segun sugerencia del profe respecto a 
+#render_template
+@app.route("/historialrecomendaciones")
+def main():
+    recomend = []
+    conn = connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM dbo.TblCars")
+    for row in cursor.fetchall():
+        recomend.append({"id": row[0], "name": row[1], "year": row[2], "price": row[3]})
+    conn.close()
+    return render_template("carslist.html", recomend = recomend)
+    #return render_template("carslist.html", recomend = recomend)
+
 
 #Metodos de prueba:
 
@@ -508,3 +483,74 @@ def data():
 #            # connection.close()
 #             #print("MySQL connection is closed")
 #     return temp
+
+
+
+
+#Codigo No usable
+
+# Daniel Dominguez
+#modelo (solo sirve si db is postgres sql)
+# class Users(mydb.schema): # modelo de la tabla User
+#     id = mydb.Column(mydb.Integer, primary_key=True)
+#     username = mydb.Column(mydb.String(50), unique=True)
+#     password = mydb.Column(mydb.String(50))
+#     email = mydb.Column(mydb.String(50), unique=True)
+#     cellphone = mydb.Column(mydb.Integer)
+#     def __init__(self, username, password, email, cellphone):
+#         self.username = username
+#         self.password = password
+#         self.email = email
+#         self.cellphone = cellphone
+
+#     def __repr__(self):
+#         return f'<User {self.username}>'
+
+# class Users(mydb):
+#     __tablename__ = 'Users'
+    
+#     id = Column(Integer, primary_key=True)
+#     username = Column(String(50), unique=True)
+#     password = Column(String(50))
+#     email = Column(String(50), unique=True)
+#     cellphone = Column(Integer)
+    
+#     def __init__(self, username, password, email, cellphone):
+#         self.username = username
+#         self.password = password
+#         self.email = email
+#         self.cellphone = cellphone
+
+#     def __repr__(self):
+#         return f'<User {self.username}>'
+
+# este codigo comentado de abajo funciona para Postgresql
+# no se si funcione para Mysql
+
+#with app.app_context():
+#     mydb.create_all() # crea las tablas si no existen
+
+#Mysql MOdel not working
+# @app.route('/login', methods=['POST'])
+# @cross_origin(origin='*')
+# def login():
+#     try:
+#         username = request.json['username']
+#         clave = request.json['clave']
+#         #user = User.query.filter_by(username=username).first()
+#         cursor = mydb.cursor()
+#         cursor.execute("SELECT clave from Users WHERE username="+username)
+#         results = cursor.fetchall()
+#         if results == clave:
+#             # Crea un token de acceso para el usuario autenticado
+#             access_token = create_access_token(identity=Users.id)
+#             return jsonify({'access_token': access_token}), 200
+#         else:
+#             return jsonify({'message': 'Credenciales inválidas'}), 401
+#     except Error as e:
+#         print("Error while connecting to MySQL", e)
+
+# Query simple que trae un id
+#Ejemplo de read con un query X a la BD
+
+#Daniel Dominguez
