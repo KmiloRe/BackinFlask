@@ -8,7 +8,7 @@ pip install Flask-SQLAlchemy
 pip install Flask-JWT-Extended
 pip install Authlib 
 pip install sqlalchemy
-pip install pandas (por alguna razon, suele funcionar mejor instalandose desde la terminal de VS)
+* pip install pandas (por alguna razon, suele funcionar mejor instalandose desde la terminal de VS)
 
 * La base de datos se encuentra en el docker
 * app.py debe estar corriendo desde el escritorio en http://127.0.0.1:5000
