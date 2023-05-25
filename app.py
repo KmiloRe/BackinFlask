@@ -1,3 +1,4 @@
+from random import randrange
 import flask
 from ast import Match
 # import sqlite3
@@ -24,6 +25,9 @@ import os
 
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
+
+#Para leer excel
+import pandas as pd
 
 #import pyodbc
 
@@ -176,12 +180,16 @@ def login():
     except Error as e:
         print("Error while connecting to MySQL", e)
 
+randomglobarl = 0
 @app.route('/readinfo', methods=['GET'])
 @cross_origin(origin='*')
 def read():
     try:
         cursor = mydb.cursor()
-        cursor.execute("SELECT username from Users Where id='100000'")
+        randomid = randrange(1, 6)
+        pppp = str(randomid) 
+        randomglobarl = randomid
+        cursor.execute("SELECT nombre from muchoslugares Where id='"+pppp+"'")
         results = cursor.fetchall()
         data = []
         for i in results:
@@ -201,6 +209,96 @@ def read():
     #Todo lo que retorna en web tiene que ser String 
     except Error as e:
         print("Error while connecting to MySQL", e)
+
+@app.route('/readimage', methods=['GET'])
+@cross_origin(origin='*')
+def readerimagen():
+    try:
+        cursor = mydb.cursor()
+        randomid = randrange(1, 101)
+        pppp = str(randomid) 
+        cursor.execute("SELECT nombre from lugaresplataformas Where id='"+pppp+"'")
+        results = cursor.fetchall()
+        data = []
+        for i in results:
+                        data.append(i)
+                        #print(data)
+        cursor2 = mydb.cursor()
+        cursor2.execute("SELECT imagen from lugaresplataformas Where id='"+pppp+"'")
+        results2 = cursor.fetchall()
+        data2 = []
+        for i in results2:
+                        data2.append(i)
+
+        #print(cursor.execute("SELECT id from Users Where id='1116241998'"))
+        # response = {
+        #     'message': 'Registro exitoso',
+        #     'data': {
+        #         'username': username,
+        #         'email': email,
+        #         'cellphone': cellphone
+        #     }
+        # }
+        #return str(data[0][0])
+
+        cursor3 = mydb.cursor()
+        cursor3.execute("SELECT descripcion from lugaresplataformas Where id='"+pppp+"'")
+        results3 = cursor.fetchall()
+        data3 = []
+        for i in results3:
+                        data3.append(i)
+        
+        cursor4 = mydb.cursor()
+        cursor4.execute("SELECT instagram from lugaresplataformas Where id='"+pppp+"'")
+        results4 = cursor.fetchall()
+        data4 = []
+        for i in results4:
+                        data4.append(i)
+
+
+        print('')
+        second_string = str(data2[0][0]).replace('"','')
+        print(second_string)
+        return jsonify(
+            nombre=str(data[0][0]),
+            #instagram='https://www.instagram.com/accounts/login/',
+            instagram=str(data4[0][0]),
+            imagen= str(data2[0][0]), #second_string
+            descripcion= str(data3[0][0])
+        )
+    #Todo lo que retorna en web tiene que ser String 
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+##Recomendaciones random
+@app.route('/recomend', methods=['GET'])
+@cross_origin(origin='*')
+def recomend2():
+    try:
+        cursor = mydb.cursor()
+        randomid = 2 #randrange(1, 6, 2) 
+        cursor.execute("SELECT username from Users Where id=100000")
+        results = cursor.fetchall()
+        print(results)
+        data = []
+        for i in results:
+                        data.append(i)
+                        #print(data)
+
+        #print(cursor.execute("SELECT id from Users Where id='1116241998'"))
+        # response = {
+        #     'message': 'Registro exitoso',
+        #     'data': {
+        #         'username': username,
+        #         'email': email,
+        #         'cellphone': cellphone
+        #     }
+        # }
+        return str(data[0][0])
+    #Todo lo que retorna en web tiene que ser String 
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+        return 'Error'+e
+
 
 
 #Este recomendaciones es de un trabajo de telematica, 
@@ -416,7 +514,7 @@ def data():
             connection.commit()
            # connection.close()
             #print("MySQL connection is closed")
-    return render_template("contact.html")
+    return 'registrado'
 #enviar un bool y en front bool = true render x.html
 #false, que se quede =
     #return newusername
